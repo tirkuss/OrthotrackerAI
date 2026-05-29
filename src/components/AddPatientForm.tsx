@@ -319,7 +319,7 @@ export default function AddPatientForm({
                 <button
                   type="button"
                   onClick={(e) => handleRemovePhoto(index, e)}
-                  className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 transition-all text-xs"
+                  className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all text-xs"
                   title="Delete photograph"
                 >
                   ✕
@@ -365,7 +365,7 @@ export default function AddPatientForm({
           </button>
           <button
             type="submit"
-            className="flex-1 h-14 rounded-xl bg-primary hover:bg-primary-container text-white font-semibold shadow-md active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+            className="flex-1 h-14 rounded-xl bg-primary hover:bg-primary-container text-white font-semibold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
           >
             <Check className="w-5 h-5" />
             Create Patient Profile
