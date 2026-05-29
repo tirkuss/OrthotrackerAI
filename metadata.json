@@ -1,0 +1,6 @@
+{
+  "name": "OrthoTracker",
+  "description": "An offline-first orthodontic patient tracking application designed for Android mobile views. Features fast IndexedDB search for up to 10,000 patients, uncropped clinical photo thumbnails, and automated profile change histories.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

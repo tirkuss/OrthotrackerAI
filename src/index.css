@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0284c7; /* sky-600 */
+  --color-primary-container: #0369a1; /* sky-700 */
+  --color-secondary: #0d9488; /* teal-600 */
+  --font-headline: "Space Grotesk", sans-serif;
+}
