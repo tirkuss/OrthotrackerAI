@@ -342,24 +342,29 @@ export default function PatientProfile({
   };
 
   const handleAddLogPhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const fileList = Array.from(files);
       try {
-        const compressedBase64 = await compressImageFile(file, 800, 800, 0.75);
-        if (compressedBase64) {
-          setLogPhotos([...logPhotos, compressedBase64]);
-        }
+        const compressedResults = await Promise.all(
+          fileList.map(file => compressImageFile(file, 800, 800, 0.75))
+        );
+        const valid = compressedResults.filter(Boolean) as string[];
+        setLogPhotos(prev => [...prev, ...valid]);
       } catch (err) {
-        console.error('Failed to compress log photo:', err);
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setLogPhotos([...logPhotos, event.target.result as string]);
-          }
-        };
-        reader.readAsDataURL(file);
+        console.error('Failed to compress log photos:', err);
+        fileList.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              setLogPhotos(prev => [...prev, event.target!.result as string]);
+            }
+          };
+          reader.readAsDataURL(file);
+        });
       }
     }
+    if (e.target) e.target.value = '';
   };
 
   const handleRemoveLogPhoto = (picIdx: number) => {
@@ -478,7 +483,7 @@ export default function PatientProfile({
           {/* Main Photo Visual Card (not cropped) */}
           <div className="bg-white dark:bg-slate-900 duration-150 rounded-xl p-4 border border-slate-200/50 dark:border-slate-800 flex flex-col items-center">
             <div 
-              className="w-40 h-40 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 flex items-center justify-center border border-slate-200/60 dark:border-slate-800 mb-0 shadow-xs cursor-pointer hover:opacity-90 transition-all"
+              className="w-40 h-40 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 flex items-center justify-center border border-slate-200/60 dark:border-slate-800 mb-0 shadow-xs cursor-pointer"
               onClick={() => {
                 if (patient.photos?.[0]) {
                   setZoomedPhoto(patient.photos[0]);
@@ -668,6 +673,36 @@ export default function PatientProfile({
                     <p className="text-slate-800 dark:text-slate-300 font-medium font-mono">{patient.age} years old</p>
                   </div>
                 </div>
+
+                {patient.startDate && (
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase">Treatment Start Date</p>
+                      <p className="text-slate-800 dark:text-slate-300 font-medium font-mono">{patient.startDate}</p>
+                    </div>
+                  </div>
+                )}
+
+                {patient.clinic && (
+                  <div className="flex items-start gap-3">
+                    <BookOpen className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase">Clinic</p>
+                      <p className="text-slate-800 dark:text-slate-300 font-medium">{patient.clinic}</p>
+                    </div>
+                  </div>
+                )}
+
+                {patient.address && (
+                  <div className="flex items-start gap-3">
+                    <MessageSquare className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[10px] font-semibold text-slate-400 uppercase">Address</p>
+                      <p className="text-slate-800 dark:text-slate-300 font-medium">{patient.address}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -790,6 +825,7 @@ export default function PatientProfile({
                           ref={newLogPhotoInputRef}
                           onChange={handleAddLogPhotoChange}
                           accept="image/*"
+                          multiple
                           className="hidden"
                         />
                       </div>
@@ -954,24 +990,28 @@ export default function PatientProfile({
                                         <input
                                           type="file"
                                           accept="image/*"
+                                          multiple
                                           className="hidden"
                                           onChange={async (e) => {
-                                            if (e.target.files?.[0]) {
-                                              const file = e.target.files[0];
+                                            if (e.target.files && e.target.files.length > 0) {
+                                              const fileList = Array.from(e.target.files);
                                               try {
-                                                const compressedBase64 = await compressImageFile(file, 800, 800, 0.75);
-                                                if (compressedBase64) {
-                                                  setEditLogPhotos(prev => [...prev, compressedBase64]);
-                                                }
+                                                const compressedResults = await Promise.all(
+                                                  fileList.map(file => compressImageFile(file, 800, 800, 0.75))
+                                                );
+                                                const valid = compressedResults.filter(Boolean) as string[];
+                                                setEditLogPhotos(prev => [...prev, ...valid]);
                                               } catch (err) {
-                                                console.error('Failed to compress inline edit log photo:', err);
-                                                const reader = new FileReader();
-                                                reader.onload = (loadEvt) => {
-                                                  if (loadEvt.target?.result) {
-                                                    setEditLogPhotos(prev => [...prev, loadEvt.target!.result as string]);
-                                                  }
-                                                };
-                                                reader.readAsDataURL(file);
+                                                console.error('Failed to compress inline edit log photos:', err);
+                                                fileList.forEach(file => {
+                                                  const reader = new FileReader();
+                                                  reader.onload = (loadEvt) => {
+                                                    if (loadEvt.target?.result) {
+                                                      setEditLogPhotos(prev => [...prev, loadEvt.target!.result as string]);
+                                                    }
+                                                  };
+                                                  reader.readAsDataURL(file);
+                                                });
                                               }
                                             }
                                           }}
@@ -1132,7 +1172,7 @@ export default function PatientProfile({
 
       {/* High-Resolution Zoomed Photo Lightbox Modal Overlay */}
       {zoomedPhoto && (
-        <div className="fixed inset-0 bg-slate-950/85 z-[9999] backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-950/85 z-[9999] flex items-center justify-center p-4">
           <div className="relative max-w-4xl w-full bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl flex flex-col items-center">
             
             {/* Top Bar controls */}
