@@ -12,12 +12,14 @@ interface PatientProfileProps {
   patient: Patient;
   onBack: () => void;
   onUpdatePatient: (updatedPatient: Patient) => void;
+  onShowToast?: (msg: string) => void; // Optional callback for toast notifications
 }
 
 export default function PatientProfile({
   patient,
   onBack,
-  onUpdatePatient
+  onUpdatePatient,
+  onShowToast
 }: PatientProfileProps) {
   const [activeTab, setActiveTab] = useState<'timeline' | 'changelog'>('timeline');
   const [isEditing, setIsEditing] = useState(false);
@@ -59,6 +61,15 @@ export default function PatientProfile({
   const [logNotes, setLogNotes] = useState('');
   const [logPhotos, setLogPhotos] = useState<string[]>([]);
   const newLogPhotoInputRef = useRef<HTMLInputElement>(null);
+
+  // Internal toast function (FIXED: no alert())
+  const showToast = (msg: string) => {
+    if (onShowToast) {
+      onShowToast(msg);
+    } else {
+      console.log('[Toast]', msg);
+    }
+  };
 
   // Process and save changes with automatic generation of ChangeLog items
   const handleSaveChanges = () => {
@@ -128,7 +139,7 @@ export default function PatientProfile({
         changeLogs: [...changes, ...patient.changeLogs]
       };
       onUpdatePatient(updatedPatient);
-      alert('Patient profile changes saved successfully.');
+      showToast('Patient profile changes saved successfully.');
     }
 
     setIsEditing(false);
@@ -332,7 +343,7 @@ export default function PatientProfile({
       doc.save(docName);
     } catch (pdfErr) {
       console.error('PDF construction error: ', pdfErr);
-      alert('A rendering error occurred during PDF assembly. Check diagnostic attachment formatting.');
+      showToast('A rendering error occurred during PDF assembly. Check diagnostic attachment formatting.');
     }
   };
 
@@ -374,7 +385,7 @@ export default function PatientProfile({
   const handleSaveProgressLog = (e: React.FormEvent) => {
     e.preventDefault();
     if (!logNotes.trim()) {
-      alert('Please fill out clinical follow up notes.');
+      showToast('Please fill out clinical follow up notes.');
       return;
     }
 
@@ -409,7 +420,7 @@ export default function PatientProfile({
     // Reset notes and files
     setLogNotes('');
     setLogPhotos([]);
-    alert('Clinical follow up notes saved successfully.');
+    showToast('Clinical follow up notes saved successfully.');
   };
 
   return (
@@ -442,7 +453,7 @@ export default function PatientProfile({
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={handleExportPDF}
-            className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+            className="px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white dark:bg-slate-200 dark:text-slate-900 dark:hover:bg-white rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
           >
             <FileDown className="w-4 h-4" />
             EXPORT PROFILE (PDF)
@@ -452,13 +463,13 @@ export default function PatientProfile({
             <>
               <button
                 onClick={() => setIsEditing(false)}
-                className="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
                 Discard
               </button>
               <button
                 onClick={handleSaveChanges}
-                className="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 <Save className="w-4 h-4" />
                 Save Changes
@@ -467,7 +478,7 @@ export default function PatientProfile({
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 text-xs font-semibold border-2 border-primary text-primary hover:bg-primary/5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-semibold border-2 border-primary text-primary hover:bg-primary/5 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <Edit3 className="w-4 h-4" />
               EDIT PROFILE
@@ -481,7 +492,7 @@ export default function PatientProfile({
         <div className="md:col-span-4 space-y-6">
           
           {/* Main Photo Visual Card (not cropped) */}
-          <div className="bg-white dark:bg-slate-900 duration-150 rounded-xl p-4 border border-slate-200/50 dark:border-slate-800 flex flex-col items-center">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200/50 dark:border-slate-800 flex flex-col items-center">
             <div 
               className="w-40 h-40 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-950 flex items-center justify-center border border-slate-200/60 dark:border-slate-800 mb-0 shadow-xs cursor-pointer"
               onClick={() => {
@@ -547,7 +558,7 @@ export default function PatientProfile({
                   <input
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
-                    className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-955 text-slate-800 dark:text-slate-100"
+                    className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
                     type="email"
                   />
                 </div>
@@ -575,7 +586,7 @@ export default function PatientProfile({
                           onClick={() => {
                             setEditPhotos(prev => prev.filter((_, idx) => idx !== pIdx));
                           }}
-                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-750 text-white rounded-full w-4.5 h-4.5 text-[9px] flex items-center justify-center cursor-pointer shadow-md border border-white/20 animate-fade-in"
+                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-750 text-white rounded-full w-4.5 h-4.5 text-[9px] flex items-center justify-center cursor-pointer shadow-md"
                           title="Remove photo"
                         >
                           ✕
@@ -594,7 +605,7 @@ export default function PatientProfile({
                                 return [selected, ...next];
                               });
                             }}
-                            className="absolute bottom-1 left-1 bg-slate-800/80 hover:bg-slate-900 text-white px-1 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-widest cursor-pointer shadow-xs border border-white/10"
+                            className="absolute bottom-1 left-1 bg-slate-800/80 hover:bg-slate-900 text-white px-1 py-0.5 rounded text-[8px] font-extrabold uppercase tracking-widest cursor-pointer"
                             title="Set as Main Display Photo"
                           >
                             Set Main
@@ -602,7 +613,7 @@ export default function PatientProfile({
                         )}
                       </div>
                     ))}
-                    <label className="aspect-square rounded-lg border-2 border-dashed border-slate-350 dark:border-slate-800 hover:border-primary dark:hover:border-primary-container flex flex-col items-center justify-center text-slate-400 hover:text-primary transition-all cursor-pointer bg-white dark:bg-slate-950">
+                    <label className="aspect-square rounded-lg border-2 border-dashed border-slate-350 dark:border-slate-800 hover:border-primary dark:hover:border-primary-container flex flex-col items-center justify-center text-slate-400 hover:text-primary cursor-pointer transition-colors">
                       <Plus className="w-5 h-5 mb-0.5" />
                       <span className="text-[7.5px] font-bold uppercase tracking-wider text-center">Add File</span>
                       <input
@@ -730,7 +741,7 @@ export default function PatientProfile({
                   <textarea
                     value={editPlan}
                     onChange={(e) => setEditPlan(e.target.value)}
-                    className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-955 text-slate-800 dark:text-slate-100"
+                    className="w-full text-xs p-2 rounded-lg border border-slate-200 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
                     rows={4}
                   />
                 </div>
@@ -739,14 +750,14 @@ export default function PatientProfile({
               <div className="space-y-5">
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1">Chief Complaint</p>
-                  <p className="text-sm text-slate-800 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-950/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800/60 leading-relaxed font-serif">
+                  <p className="text-sm text-slate-800 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-950/40 p-3 rounded-lg border border-slate-100 dark:border-slate-800/60 leading-relaxed">
                     "{patient.chiefComplaint}"
                   </p>
                 </div>
 
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase mb-2">Proposed Treatment Plan</p>
-                  <p className="text-sm text-slate-805 dark:text-slate-300 bg-sky-50/50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/40 p-3 rounded-lg leading-relaxed whitespace-pre-wrap font-sans">
+                  <p className="text-sm text-slate-805 dark:text-slate-300 bg-sky-50/50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/40 p-3 rounded-lg leading-relaxed whitespace-pre-wrap">
                     {patient.treatmentPlan || 'No treatment plan draft exists.'}
                   </p>
                 </div>
@@ -757,7 +768,7 @@ export default function PatientProfile({
 
         {/* Right Column: Timeline tabs, Progress logs, and Change logs list */}
         <div className="md:col-span-8 flex flex-col gap-6">
-          <div className="bg-white dark:bg-slate-900 duration-150 rounded-xl overflow-hidden border border-slate-200/50 dark:border-slate-800 shadow-xs">
+          <div className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200/50 dark:border-slate-800 shadow-xs">
             {/* Tabs Trigger Navigation */}
             <div className="flex border-b border-slate-200/60 dark:border-slate-850 bg-slate-50 dark:bg-slate-900">
               <button
@@ -795,7 +806,7 @@ export default function PatientProfile({
                     </h3>
                     <button
                       onClick={() => setShowAddLog(!showAddLog)}
-                      className="px-3 py-1.5 bg-primary hover:bg-primary-container text-white text-xs font-semibold rounded-lg flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                      className="px-3 py-1.5 bg-primary hover:bg-primary-container text-white text-xs font-semibold rounded-lg flex items-center gap-1 shadow-sm transition-colors cursor-pointer"
                     >
                       <Plus className="w-4 h-4" />
                       Log New
@@ -813,7 +824,7 @@ export default function PatientProfile({
                           <button
                             type="button"
                             onClick={handleAddLogClick}
-                            className="px-3 h-9 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition-all cursor-pointer"
+                            className="px-3 h-9 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 transition-colors"
                           >
                             <Camera className="w-4 h-4" />
                             Load Photo
@@ -921,7 +932,7 @@ export default function PatientProfile({
                                     {log.date}
                                   </h4>
                                   {durationStr && (
-                                    <span className="text-[10px] font-bold text-primary dark:text-sky-305 bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 rounded-md mt-0.5 inline-block border border-sky-100 dark:border-sky-900 uppercase tracking-wider font-mono">
+                                    <span className="text-[10px] font-bold text-primary dark:text-sky-305 bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 rounded-md mt-0.5 inline-block border border-sky-100 dark:border-sky-900/40">
                                       {durationStr}
                                     </span>
                                   )}
@@ -937,7 +948,7 @@ export default function PatientProfile({
                                         setEditLogNotes(log.notes || '');
                                         setEditLogPhotos(log.photos || []);
                                       }}
-                                      className="text-[9px] font-bold text-primary hover:text-primary-container dark:text-sky-400 px-2 py-1 uppercase rounded-md hover:bg-primary/5 cursor-pointer flex items-center gap-1 border border-primary/20"
+                                      className="text-[9px] font-bold text-primary hover:text-primary-container dark:text-sky-400 px-2 py-1 uppercase rounded-md hover:bg-primary/5 cursor-pointer"
                                     >
                                       Edit Log
                                     </button>
@@ -978,13 +989,13 @@ export default function PatientProfile({
                                             onClick={() => {
                                               setEditLogPhotos(prev => prev.filter((_, idx) => idx !== pIdx));
                                             }}
-                                            className="absolute top-1 right-1 bg-red-600 hover:bg-red-750 text-white rounded-full w-4.5 h-4.5 text-[9px] flex items-center justify-center cursor-pointer shadow"
+                                            className="absolute top-1 right-1 bg-red-600 hover:bg-red-750 text-white rounded-full w-4.5 h-4.5 text-[9px] flex items-center justify-center cursor-pointer"
                                           >
                                             ✕
                                           </button>
                                         </div>
                                       ))}
-                                      <label className="aspect-square rounded-lg border-2 border-dashed border-slate-350 hover:border-primary flex flex-col items-center justify-center text-slate-450 hover:text-primary transition-all cursor-pointer bg-white dark:bg-slate-900">
+                                      <label className="aspect-square rounded-lg border-2 border-dashed border-slate-350 hover:border-primary flex flex-col items-center justify-center text-slate-400 hover:text-primary cursor-pointer transition-colors">
                                         <Plus className="w-5 h-5 mb-0.5" />
                                         <span className="text-[8px] font-bold uppercase tracking-widest text-center px-1">Add File</span>
                                         <input
@@ -1062,7 +1073,7 @@ export default function PatientProfile({
 
                                         onUpdatePatient(updatedPatient);
                                         setEditingLogId(null);
-                                        alert('Progress follow up log successfully updated.');
+                                        showToast('Progress follow up log successfully updated.');
                                       }}
                                       className="px-3.5 py-1.5 bg-primary hover:bg-primary-container text-white font-bold rounded-lg cursor-pointer"
                                     >
@@ -1084,7 +1095,7 @@ export default function PatientProfile({
                                       {log.photos.map((photoUrl, photoIdx) => (
                                         <div
                                           key={photoIdx}
-                                          className="aspect-square bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-lg overflow-hidden group cursor-zoom-in flex items-center justify-center p-1"
+                                          className="aspect-square bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-lg overflow-hidden group cursor-zoom-in flex items-center justify-center"
                                           onClick={() => setZoomedPhoto(photoUrl)}
                                           title="Click to zoom clinical checkup image"
                                         >
@@ -1180,7 +1191,7 @@ export default function PatientProfile({
               <span className="text-[10px] text-slate-400 font-mono font-bold tracking-wider uppercase">Clinical High-Resolution Diagnostics Image</span>
               <button 
                 onClick={() => setZoomedPhoto(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 dark:hover:text-white transition-all flex items-center justify-center cursor-pointer font-bold"
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 dark:hover:text-white transition-colors flex items-center justify-center cursor-pointer font-bold"
                 title="Close Zoom"
               >
                 ✕
