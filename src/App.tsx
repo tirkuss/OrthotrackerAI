@@ -111,36 +111,50 @@ export default function App() {
     };
 
     try {
-      await OrthoDatabase.savePatient(newPatient);
-      await loadDatabaseData();
+      // Optimistically update local state (FIXED: no full reload)
+      setPatients(prev => [...prev, newPatient]);
       setShowAddPatient(false);
-      setSelectedPatient(newPatient); // Drill down directly into new profile!
+      setSelectedPatient(newPatient);
       showToast(`Orthodontic profile created for ${newPatient.name}.`);
+      
+      // Save to DB in background
+      await OrthoDatabase.savePatient(newPatient);
     } catch (err: any) {
-      alert(`Failed to save record: ${err.message}`);
+      // On error, rollback and show non-blocking toast
+      setPatients(prev => prev.filter(p => p.id !== newId));
+      showToast(`Failed to save record: ${err.message}`);
     }
   };
 
-  // Edit or Update Patient trigger
+  // Edit or Update Patient trigger (FIXED: optimistic update pattern)
   const handleUpdatePatient = async (updatedPatient: Patient) => {
     try {
-      await OrthoDatabase.savePatient(updatedPatient);
-      await loadDatabaseData();
+      // Optimistically update local state immediately (FIXED: no full reload)
+      setPatients(prev => prev.map(p => p.id === updatedPatient.id ? updatedPatient : p));
       setSelectedPatient(updatedPatient);
       showToast(`Changes recorded successfully on patient: ${updatedPatient.id}`);
+      
+      // Save to DB in background
+      await OrthoDatabase.savePatient(updatedPatient);
     } catch (err: any) {
-      alert(`Database save error: ${err.message}`);
+      // On error, reload to ensure consistency
+      showToast(`Save error, reloading database: ${err.message}`);
+      await loadDatabaseData();
     }
   };
 
   const handleToggleArchivePatient = async (patient: Patient) => {
     const updated = { ...patient, archived: !patient.archived };
     try {
-      await OrthoDatabase.savePatient(updated);
-      await loadDatabaseData();
+      // Optimistic update
+      setPatients(prev => prev.map(p => p.id === updated.id ? updated : p));
       showToast(updated.archived ? 'Patient archived securely.' : 'Patient restored to active roster.');
+      
+      // Save in background
+      await OrthoDatabase.savePatient(updated);
     } catch (err: any) {
-      alert(`Archive action failed: ${err.message}`);
+      showToast(`Archive action failed: ${err.message}`);
+      await loadDatabaseData();
     }
   };
 
@@ -152,11 +166,14 @@ export default function App() {
     };
 
     try {
-      await OrthoDatabase.saveAppointment(newAppt);
-      await loadDatabaseData();
+      // Optimistic update
+      setAppointments(prev => [...prev, newAppt]);
       showToast(`Ortho chair slot booked successfully for ${newAppt.patientName}.`);
+      
+      // Save in background
+      await OrthoDatabase.saveAppointment(newAppt);
     } catch (err: any) {
-      alert(`Could not save appt: ${err.message}`);
+      showToast(`Could not save appt: ${err.message}`);
     }
   };
 
@@ -170,10 +187,14 @@ export default function App() {
       fileSize: sizeStr
     };
     try {
+      // Optimistic update
+      setBackupLogs(prev => [newLog, ...prev]);
+      
+      // Save in background
       await OrthoDatabase.addBackupHistoryLog(newLog);
-      await loadDatabaseData();
     } catch (e) {
       console.error(e);
+      showToast('Failed to log backup');
     }
   };
 
@@ -235,7 +256,7 @@ export default function App() {
                   </button>
                   <button
                     onClick={handleSyncDatabase}
-                    className="px-4 py-2 bg-[#006399] hover:bg-[#005280] text-white border-none font-extrabold rounded-lg text-xs tracking-wider transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                    className="px-4 py-2 bg-[#006399] hover:bg-[#005280] text-white border-none font-extrabold rounded-lg text-xs tracking-wider transition-colors flex items-center gap-1.5 shadow-md"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     VAULT SYNC
@@ -286,7 +307,7 @@ export default function App() {
                             setActiveTab('patients');
                           }
                         }}
-                        className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-150 dark:border-slate-800 hover:border-primary cursor-pointer transition-colors flex justify-between items-center"
+                        className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-150 dark:border-slate-800 hover:border-primary cursor-pointer transition-colors flex justify-between"
                       >
                         <div>
                           <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{appt.patientName}</p>
@@ -340,7 +361,7 @@ export default function App() {
         return (
           <TechnicalInfo
             onContactDeveloper={() => {
-              alert('Support Line: Contact Dr. Sukrit Thakur via Email support@orthodigital.org or contact developer panels.');
+              showToast('Support Line: Contact Dr. Sukrit Thakur via Email support@orthodigital.org or contact developer panels.');
             }}
             onNavigateToDataManagement={() => setActiveTab('admin')}
           />
@@ -370,8 +391,8 @@ export default function App() {
         <div className="fixed inset-0 z-100 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl border border-slate-150 dark:border-slate-800 p-6 md:p-8 shadow-2xl space-y-6">
             <div className="text-center space-y-2">
-              <div className="w-12 h-12 bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-305 rounded-xl flex items-center justify-center mx-auto mb-2 border border-sky-100 dark:border-sky-900">
-                <Settings className="w-6 h-6 animate-spin-slow shrink-0" />
+              <div className="w-12 h-12 bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-305 rounded-xl flex items-center justify-center mx-auto mb-2 border border-sky-100 dark:border-sky-900/60">
+                <Settings className="w-6 h-6 animate-spin shrink-0" />
               </div>
               <h2 className="text-[22px] font-extrabold text-slate-850 dark:text-slate-100 tracking-tight leading-tight">
                 Practice Initial Setup
@@ -391,7 +412,7 @@ export default function App() {
                   value={setupDocName}
                   onChange={(e) => setSetupDocName(e.target.value)}
                   placeholder="e.g. Dr. Sukrit Thakur"
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:bg-white dark:focus:bg-slate-900 outline-none transition-all focus:ring-2 focus:ring-primary/20"
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:bg-white dark:focus:bg-slate-900"
                 />
                 <span className="text-[9px] text-slate-400 block mt-0.5">
                   Used as the reviewing orthodontist and primary account user for clinical change records.
@@ -407,7 +428,7 @@ export default function App() {
                   value={setupVaultPath}
                   onChange={(e) => setSetupVaultPath(e.target.value)}
                   placeholder="e.g. C:\Users\Thakur\Desktop\Orthotracker\Vault"
-                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:bg-white dark:focus:bg-slate-900 outline-none transition-all focus:ring-2 focus:ring-primary/20"
+                  className="w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs focus:bg-white dark:focus:bg-slate-900"
                 />
                 <span className="text-[9px] text-slate-400 block mt-0.5">
                   Local computer directory path location where offline backups and exported patient directories are persisted.
@@ -419,7 +440,7 @@ export default function App() {
               type="button"
               onClick={() => {
                 if (!setupDocName.trim() || !setupVaultPath.trim()) {
-                  alert('Please enter a valid clinician name and storage vault folder.');
+                  showToast('Please enter a valid clinician name and storage vault folder.');
                   return;
                 }
                 localStorage.setItem('ortho_doctor_name', setupDocName.trim());
@@ -427,7 +448,7 @@ export default function App() {
                 setShowOnboarding(false);
                 showToast('Clinical offline workspace initialized successfully.');
               }}
-              className="w-full h-11 bg-[#5EB2F4] hover:bg-[#4ea2e4] text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer border-none"
+              className="w-full h-11 bg-[#5EB2F4] hover:bg-[#4ea2e4] text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-colors shadow-md active:scale-98 flex items-center justify-center"
             >
               Initialize security Vault
             </button>
@@ -438,7 +459,7 @@ export default function App() {
       {/* HIPAA Compliance top status ticker overlay */}
       {toastMessage && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-55 w-full max-w-sm px-4">
-          <div className="bg-slate-900 border border-slate-800 text-white text-xs px-4 py-3 rounded-xl shadow-lg flex items-center justify-between gap-3 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-800 text-white text-xs px-4 py-3 rounded-xl shadow-lg flex items-center justify-between gap-3 transition-all duration-150 animate-in fade-in">
             <span className="font-medium">{toastMessage}</span>
             <button onClick={() => setToastMessage(null)} className="text-slate-400 hover:text-white">✕</button>
           </div>
@@ -473,7 +494,7 @@ export default function App() {
 
           <button 
             onClick={handleSyncDatabase}
-            className={`p-2 hover:bg-slate-100 rounded-full text-slate-500 relative ${isSyncing ? 'text-primary' : ''}`}
+            className={`p-2 hover:bg-slate-100 rounded-full text-slate-500 relative transition-colors ${isSyncing ? 'text-primary' : ''}`}
             title="Sync offline state"
           >
             <RefreshCw className="w-5 h-5" />
@@ -481,7 +502,7 @@ export default function App() {
           
           <button 
             onClick={() => setActiveTab('profile_dev')}
-            className="p-2 hover:bg-slate-100 rounded-full text-slate-400" 
+            className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors" 
             title="Software Info"
           >
             <HelpCircle className="w-5 h-5 text-slate-500" />
@@ -503,7 +524,7 @@ export default function App() {
               setActiveTab('home');
               setSelectedPatient(null);
             }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-colors cursor-pointer ${
               activeTab === 'home' && !selectedPatient && !showAddPatient
                 ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
@@ -519,7 +540,7 @@ export default function App() {
               setSelectedPatient(null);
               setShowAddPatient(false);
             }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-colors cursor-pointer ${
               (activeTab === 'patients' || selectedPatient || showAddPatient)
                 ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
@@ -534,7 +555,7 @@ export default function App() {
               setActiveTab('schedule');
               setSelectedPatient(null);
             }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-colors cursor-pointer ${
               activeTab === 'schedule' && !selectedPatient
                 ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
@@ -549,7 +570,7 @@ export default function App() {
               setActiveTab('profile_dev');
               setSelectedPatient(null);
             }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-colors cursor-pointer ${
               activeTab === 'profile_dev' && !selectedPatient
                 ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
@@ -564,7 +585,7 @@ export default function App() {
               setActiveTab('admin');
               setSelectedPatient(null);
             }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-colors cursor-pointer ${
               activeTab === 'admin' && !selectedPatient
                 ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
@@ -585,7 +606,7 @@ export default function App() {
       {!showAddPatient && !selectedPatient && activeTab === 'patients' && (
         <button
           onClick={() => setShowAddPatient(true)}
-          className="fixed bottom-24 right-5 md:right-10 w-14 h-14 bg-primary hover:bg-primary-container text-white rounded-2xl shadow-lg flex items-center justify-center transition-all z-40 md:hidden"
+          className="fixed bottom-24 right-5 md:right-10 w-14 h-14 bg-primary hover:bg-primary-container text-white rounded-2xl shadow-lg flex items-center justify-center transition-colors z-40"
           title="Add New Patient Profile"
         >
           <UserIcon className="w-6 h-6 stroke-[3px]" />
