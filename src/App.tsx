@@ -235,7 +235,7 @@ export default function App() {
                   </button>
                   <button
                     onClick={handleSyncDatabase}
-                    className="px-4 py-2 bg-[#006399] hover:bg-[#005280] text-white border-none font-extrabold rounded-lg text-xs tracking-wider transition-all flex items-center gap-1.5 shadow-md cursor-pointer active:scale-95"
+                    className="px-4 py-2 bg-[#006399] hover:bg-[#005280] text-white border-none font-extrabold rounded-lg text-xs tracking-wider transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
                     VAULT SYNC
@@ -467,13 +467,13 @@ export default function App() {
         <div className="flex items-center gap-3">
           {/* Active indicator */}
           <div className="items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-bold tracking-wide uppercase font-mono hidden md:flex border border-emerald-100">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span>Offline Database Synchronized</span>
           </div>
 
           <button 
             onClick={handleSyncDatabase}
-            className={`p-2 hover:bg-slate-100 rounded-full text-slate-500 relative transition-transform active:scale-95 duration-100 ${isSyncing ? 'rotate-180 animate-spin text-primary' : ''}`}
+            className={`p-2 hover:bg-slate-100 rounded-full text-slate-500 relative ${isSyncing ? 'text-primary' : ''}`}
             title="Sync offline state"
           >
             <RefreshCw className="w-5 h-5" />
@@ -505,7 +505,7 @@ export default function App() {
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
               activeTab === 'home' && !selectedPatient && !showAddPatient
-                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs scale-[1.01]'
+                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
             }`}
           >
@@ -521,7 +521,7 @@ export default function App() {
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
               (activeTab === 'patients' || selectedPatient || showAddPatient)
-                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs scale-[1.01]'
+                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
             }`}
           >
@@ -536,7 +536,7 @@ export default function App() {
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
               activeTab === 'schedule' && !selectedPatient
-                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs scale-[1.01]'
+                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
             }`}
           >
@@ -551,7 +551,7 @@ export default function App() {
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
               activeTab === 'profile_dev' && !selectedPatient
-                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs scale-[1.01]'
+                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
             }`}
           >
@@ -566,7 +566,7 @@ export default function App() {
             }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-xs font-extrabold uppercase tracking-wider text-left transition-all cursor-pointer ${
               activeTab === 'admin' && !selectedPatient
-                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs scale-[1.01]'
+                ? 'bg-sky-50 dark:bg-sky-950/40 text-primary dark:text-sky-300 border border-sky-100 dark:border-sky-900/60 shadow-xs'
                 : 'text-slate-750 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/40 hover:text-slate-950 border border-transparent'
             }`}
           >
@@ -585,7 +585,7 @@ export default function App() {
       {!showAddPatient && !selectedPatient && activeTab === 'patients' && (
         <button
           onClick={() => setShowAddPatient(true)}
-          className="fixed bottom-24 right-5 md:right-10 w-14 h-14 bg-primary hover:bg-primary-container text-white rounded-2xl shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-40 md:hidden"
+          className="fixed bottom-24 right-5 md:right-10 w-14 h-14 bg-primary hover:bg-primary-container text-white rounded-2xl shadow-lg flex items-center justify-center transition-all z-40 md:hidden"
           title="Add New Patient Profile"
         >
           <UserIcon className="w-6 h-6 stroke-[3px]" />
